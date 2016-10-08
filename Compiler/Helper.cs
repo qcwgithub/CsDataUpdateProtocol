@@ -81,7 +81,7 @@ namespace CodeDomCs2
 
         public static string GetTypeGenClassName(string prefix, Type type)
         {
-            string s = GetTypeFullName(type).Replace('<', '_').Replace('>', '_').Replace('.', '_');
+            string s = GetTypeFullName(type).Replace('<', '_').Replace('>', '_').Replace('.', '_').Replace(',', '_').Replace(' ', '_');
             if (s[s.Length - 1] == '_')
                 s = s.Substring(0, s.Length - 1);
             return prefix + s;

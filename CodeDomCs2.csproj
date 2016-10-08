@@ -44,6 +44,11 @@
     <Compile Include="Compiler.cs" />
     <Compile Include="Compiler_Config.cs" />
     <Compile Include="dpBase.cs" />
+    <Compile Include="Gen\dpDictionary_int__Nova_ActorHeroData.cs" />
+    <Compile Include="Gen\dpList_int.cs" />
+    <Compile Include="Gen\dpList_Nova_ActorHeroData.cs" />
+    <Compile Include="Gen\dpNova_ActorHeroData.cs" />
+    <Compile Include="Gen\dpNova_UserInfo.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="Nova\BufferExtension.cs" />
     <Compile Include="Nova\Nova.cs" />
@@ -54,9 +59,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Gen\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

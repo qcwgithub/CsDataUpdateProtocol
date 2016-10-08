@@ -131,6 +131,9 @@ namespace CodeDomCs2
             Type typeOfKey = typeOfDict.GetGenericArguments()[0];
             Type typeOfValue = typeOfDict.GetGenericArguments()[1];
 
+            string keyFullname = Helper.GetTypeFullName(typeOfKey);
+            string valueFullname = Helper.GetTypeFullName(typeOfValue);
+
             {
                 enumNames.Add("Clear");
                 tf.AddS("public void Clear(IWriteableBuffer w)")
@@ -148,14 +151,14 @@ namespace CodeDomCs2
 
             {
                 enumNames.Add("Remove");
-                tf.AddS("public void Remove(IWriteableBuffer w, {0} key)", Helper.GetTypeFullName(typeOfKey))
+                tf.AddS("public void Remove(IWriteableBuffer w, {0} key)", keyFullname)
                     .BraceIn()
                     .AddS("Write(w, Ops, {0}.Remove, key);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Remove_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
-                    .AddS("{0} key = r.{1}();", Helper.GetTypeFullName(typeOfKey), Helper.Type2ReadMethod(typeOfKey))
+                    .AddS("{0} key = r.{1}();", keyFullname, Helper.Type2ReadMethod(typeOfKey))
                     .AddS("rv.Remove(key);")
                     .BraceOut();
 
@@ -164,7 +167,7 @@ namespace CodeDomCs2
 
             {
                 enumNames.Add("Set");
-                tf.AddS("public void Set(IWriteableBuffer w, {0} key, {1} value_)", Helper.GetTypeFullName(typeOfKey), Helper.GetTypeFullName(typeOfValue))
+                tf.AddS("public void Set(IWriteableBuffer w, {0} key, {1} value_)", keyFullname, valueFullname)
                     .BraceIn()
                     .AddS("Write(w, Ops, {0}.Set, key, value_);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
@@ -172,7 +175,7 @@ namespace CodeDomCs2
                 tf.AddS("public static void Set_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
                     .AddS("{0} key = r.{1}();", Helper.GetTypeFullName(typeOfKey), Helper.Type2ReadMethod(typeOfKey), Helper.Type2ReadMethod(typeOfValue))
-                    .AddS("{0} value_ = r.{1}();", Helper.GetTypeFullName(typeOfKey), Helper.Type2ReadMethod(typeOfKey), Helper.Type2ReadMethod(typeOfValue))
+                    .AddS("{0} value_ = r.{1}();", valueFullname, Helper.Type2ReadMethod(typeOfValue), Helper.Type2ReadMethod(typeOfValue))
                     .AddS("rv.Remove(key);")
                     .AddS("rv.Add(key, value_);")
                     .BraceOut();
