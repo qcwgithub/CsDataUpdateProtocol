@@ -41,20 +41,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler.cs" />
-    <Compile Include="Compiler_Config.cs" />
-    <Compile Include="dpBase.cs" />
+    <Compile Include="Compiler\Compiler.cs" />
+    <Compile Include="Compiler\Compiler_Config.cs" />
+    <Compile Include="Compiler\dpBase.cs" />
+    <Compile Include="Compiler\Helper.cs" />
     <Compile Include="Gen\dpDictionary_int__Nova_ActorHeroData.cs" />
     <Compile Include="Gen\dpList_int.cs" />
     <Compile Include="Gen\dpList_Nova_ActorHeroData.cs" />
     <Compile Include="Gen\dpNova_ActorHeroData.cs" />
     <Compile Include="Gen\dpNova_UserInfo.cs" />
-    <Compile Include="Helper.cs" />
     <Compile Include="Nova\BufferExtension.cs" />
     <Compile Include="Nova\Nova.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TextFile.cs" />
+    <Compile Include="Compiler\TextFile.cs" />
+    <Compile Include="Test\Test.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

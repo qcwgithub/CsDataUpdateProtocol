@@ -2,40 +2,40 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Swift;
 
-namespace CodeDomCs2
+namespace dp
 {
     class Helper
     {
-        public static string Type2ReadMethod(Type type)
+        public static string Type2ReadMethod(string objExp, Type type)
         {
-            if (type == typeof(byte)) return "ReadByte";
-            else if (type == typeof(bool)) return "ReadBool";
-            else if (type == typeof(bool[])) return "ReadBoolArr";
-            else if (type == typeof(short)) return "ReadShort";
-            else if (type == typeof(short[])) return "ReadShortArr";
-            else if (type == typeof(int)) return "ReadInt";
-            else if (type == typeof(int[])) return "ReadIntArr";
-            else if (type == typeof(long)) return "ReadLong";
-            else if (type == typeof(long[])) return "ReadLongArr";
-            else if (type == typeof(ulong)) return "ReadULong";
-            else if (type == typeof(ulong[])) return "ReadULongArr";
-            else if (type == typeof(float)) return "ReadFloat";
-            else if (type == typeof(float[])) return "ReadFloatArr";
-            else if (type == typeof(double)) return "ReadDouble";
-            else if (type == typeof(double[])) return "ReadDoubleArr";
-            else if (type == typeof(char)) return "ReadChar";
-            else if (type == typeof(char[])) return "ReadCharArr";
-            else if (type == typeof(string)) return "ReadString";
-            else if (type == typeof(string[])) return "ReadStringArr";
+            if (type == typeof(byte)) return objExp + ".ReadByte";
+            else if (type == typeof(bool)) return objExp + ".ReadBool";
+            else if (type == typeof(bool[])) return objExp + ".ReadBoolArr";
+            else if (type == typeof(short)) return objExp + ".ReadShort";
+            else if (type == typeof(short[])) return objExp + ".ReadShortArr";
+            else if (type == typeof(int)) return objExp + ".ReadInt";
+            else if (type == typeof(int[])) return objExp + ".ReadIntArr";
+            else if (type == typeof(long)) return objExp + ".ReadLong";
+            else if (type == typeof(long[])) return objExp + ".ReadLongArr";
+            else if (type == typeof(ulong)) return objExp + ".ReadULong";
+            else if (type == typeof(ulong[])) return objExp + ".ReadULongArr";
+            else if (type == typeof(float)) return objExp + ".ReadFloat";
+            else if (type == typeof(float[])) return objExp + ".ReadFloatArr";
+            else if (type == typeof(double)) return objExp + ".ReadDouble";
+            else if (type == typeof(double[])) return objExp + ".ReadDoubleArr";
+            else if (type == typeof(char)) return objExp + ".ReadChar";
+            else if (type == typeof(char[])) return objExp + ".ReadCharArr";
+            else if (type == typeof(string)) return objExp + ".ReadString";
+            else if (type == typeof(string[])) return objExp + ".ReadStringArr";
             else if (type.IsEnum)
             {
-                return "(" + GetTypeFullName(type) + ")ReadInt";
+                return "(" + GetTypeFullName(type) + ")" + objExp + ".ReadInt";
             }
-            else if (typeof(Nova.ISerializable).IsAssignableFrom(type))
+            else if (typeof(Swift.ISerializable).IsAssignableFrom(type))
             {
-                return "Read<" + GetTypeFullName(type) + ">";
+                return objExp + ".Read<" + GetTypeFullName(type) + ">";
             }
             else
                 throw new Exception("..........");

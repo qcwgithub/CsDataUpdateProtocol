@@ -2,15 +2,71 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Swift;
+using Nova;
 
-namespace Nova
+namespace Swift
 {
+
+    public interface IReadableBuffer
+    {
+        int Available { get; }
+        byte ReadByte();
+        bool ReadBool();
+        bool[] ReadBoolArr();
+        short ReadShort();
+        short[] ReadShortArr();
+        int ReadInt();
+        int[] ReadIntArr();
+        long ReadLong();
+        long[] ReadLongArr();
+        ulong ReadULong();
+        ulong[] ReadULongArr();
+        float ReadFloat();
+        float[] ReadFloatArr();
+        double ReadDouble();
+        double[] ReadDoubleArr();
+        char ReadChar();
+        char[] ReadCharArr();
+        string ReadString();
+        string[] ReadStringArr();
+        T Read<T>() where T : ISerializable;
+    }
+
+    public interface IWriteableBuffer
+    {
+        void Write(byte[] src);
+        void Write(byte v);
+        void Write(bool v);
+        void Write(bool[] v);
+        void Write(short v);
+        void Write(short[] v);
+        void Write(int v);
+        void Write(int[] v);
+        void Write(long v);
+        void Write(long[] v);
+        void Write(ulong v);
+        void Write(ulong[] v);
+        void Write(float v);
+        void Write(float[] v);
+        void Write(double v);
+        void Write(double[] v);
+        void Write(char v);
+        void Write(char[] v);
+        void Write(string v);
+        void Write(string[] v);
+        void Write(ISerializable v);
+        void Write(ISerializable[] v);
+    }
     public interface ISerializable
     {
         void Serialize(IWriteableBuffer w);
         void Deserialize(IReadableBuffer r);
     }
+}
+
+namespace Nova
+{
 
     public class SerializableData : ISerializable
     {
@@ -58,30 +114,6 @@ namespace Nova
         }
     }
 
-    public interface IReadableBuffer
-    {
-        int Available { get; }
-        byte ReadByte();
-        bool ReadBool();
-        bool[] ReadBoolArr();
-        short ReadShort();
-        short[] ReadShortArr();
-        int ReadInt();
-        int[] ReadIntArr();
-        long ReadLong();
-        long[] ReadLongArr();
-        ulong ReadULong();
-        ulong[] ReadULongArr();
-        float ReadFloat();
-        float[] ReadFloatArr();
-        double ReadDouble();
-        double[] ReadDoubleArr();
-        char ReadChar();
-        char[] ReadCharArr();
-        string ReadString();
-        string[] ReadStringArr();
-        T Read<T>() where T : ISerializable;
-    }
 
     public class ReadableBuffer : IReadableBuffer
     {
@@ -114,32 +146,6 @@ namespace Nova
         public T Read<T>() where T : ISerializable { return d.Next<T>(); }
     }
 
-
-    public interface IWriteableBuffer
-    {
-        void Write(byte[] src);
-        void Write(byte v);
-        void Write(bool v);
-        void Write(bool[] v);
-        void Write(short v);
-        void Write(short[] v);
-        void Write(int v);
-        void Write(int[] v);
-        void Write(long v);
-        void Write(long[] v);
-        void Write(ulong v);
-        void Write(ulong[] v);
-        void Write(float v);
-        void Write(float[] v);
-        void Write(double v);
-        void Write(double[] v);
-        void Write(char v);
-        void Write(char[] v);
-        void Write(string v);
-        void Write(string[] v);
-        void Write(ISerializable v);
-        void Write(ISerializable[] v);
-    }
 
     public class WriteableBuffer : IWriteableBuffer
     {

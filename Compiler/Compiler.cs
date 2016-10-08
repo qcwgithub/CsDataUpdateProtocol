@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
 using System.IO;
 using System.Runtime;
@@ -10,8 +9,9 @@ using System.Runtime.InteropServices;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using Nova;
+using Swift;
 
-namespace CodeDomCs2
+namespace dp
 {
     class Compiler
     {
@@ -47,8 +47,28 @@ namespace CodeDomCs2
         }
         bool IsTypeSerializable(Type type)
         {
-            return IsTypeSerializableAndBasic(type) ||
-                typeof(ISerializable).IsAssignableFrom(type);
+            return (IsTypeSerializableAndBasic(type) ||
+                typeof(ISerializable).IsAssignableFrom(type));
+        }
+
+        bool CanTypeBeExported(Type type)
+        {
+            if (IsTypeSerializable(type))
+                return true;
+
+            if (Helper.TypeIsDict(type))
+            {
+                Type[] arr = type.GetGenericArguments();
+                bool keyOk = IsTypeSerializableAndBasic(arr[0]);
+                bool valueOk = IsTypeSerializable(arr[1]);
+                return (keyOk && valueOk);
+            }
+            else if (Helper.TypeIsList(type))
+            {
+                Type typeOfT = type.GetGenericArguments()[0];
+                return (IsTypeSerializable(typeOfT));
+            }
+            return false;
         }
 
 
@@ -58,25 +78,18 @@ namespace CodeDomCs2
             if (hsAllTypes.Contains(type))
                 return;
 
+            if (!CanTypeBeExported(type))
+                return;
+
             if (Helper.TypeIsDict(type))
             {
-                Type[] arr = type.GetGenericArguments();
-                bool keyOk = IsTypeSerializableAndBasic(arr[0]);
-                bool valueOk = IsTypeSerializable(arr[1]);
-                if (keyOk && valueOk)
-                {
-                    hsAllTypes.Add(type);
-                    TravelGetTypes(arr[1]);
-                }
+                hsAllTypes.Add(type);
+                TravelGetTypes(type.GetGenericArguments()[1]);
             }
             else if (Helper.TypeIsList(type))
             {
-                Type typeOfT = type.GetGenericArguments()[0];
-                if (IsTypeSerializable(typeOfT))
-                {
-                    hsAllTypes.Add(type);
-                    TravelGetTypes(typeOfT);
-                }
+                hsAllTypes.Add(type);
+                TravelGetTypes(type.GetGenericArguments()[0]);
             }
             else if (IsTypeSerializable(type))
             {
@@ -158,7 +171,7 @@ namespace CodeDomCs2
 
                 tf.AddS("public static void Remove_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
-                    .AddS("{0} key = r.{1}();", keyFullname, Helper.Type2ReadMethod(typeOfKey))
+                    .AddS("{0} key = {1}();", keyFullname, Helper.Type2ReadMethod("r", typeOfKey))
                     .AddS("rv.Remove(key);")
                     .BraceOut();
 
@@ -174,8 +187,8 @@ namespace CodeDomCs2
 
                 tf.AddS("public static void Set_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
-                    .AddS("{0} key = r.{1}();", Helper.GetTypeFullName(typeOfKey), Helper.Type2ReadMethod(typeOfKey), Helper.Type2ReadMethod(typeOfValue))
-                    .AddS("{0} value_ = r.{1}();", valueFullname, Helper.Type2ReadMethod(typeOfValue), Helper.Type2ReadMethod(typeOfValue))
+                    .AddS("{0} key = {1}();", Helper.GetTypeFullName(typeOfKey), Helper.Type2ReadMethod("r", typeOfKey), Helper.Type2ReadMethod("r", typeOfValue))
+                    .AddS("{0} value_ = {1}();", valueFullname, Helper.Type2ReadMethod("r", typeOfValue), Helper.Type2ReadMethod("r", typeOfValue))
                     .AddS("rv.Remove(key);")
                     .AddS("rv.Add(key, value_);")
                     .BraceOut();
@@ -216,10 +229,10 @@ namespace CodeDomCs2
 
                 tf.AddS("public static void Add_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
-                        .AddS("int count = r.{0}();", Helper.Type2ReadMethod(typeof(int)))
+                        .AddS("int count = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("for (int i = 0; i < count; i++)")
                         .BraceIn()
-                            .AddS("rv.Add(r.{0}());", Helper.Type2ReadMethod(typeOfT))
+                            .AddS("rv.Add({0}());", Helper.Type2ReadMethod("r", typeOfT))
                         .BraceOut()
                     .BraceOut();
 
@@ -235,8 +248,8 @@ namespace CodeDomCs2
 
                 tf.AddS("public static void Insert_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
-                        .AddS("int index = r.{0}();", Helper.Type2ReadMethod(typeof(int)))
-                        .AddS("rv.Insert(index, r.{0}());", Helper.Type2ReadMethod(typeOfT))
+                        .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
+                        .AddS("rv.Insert(index, {0}());", Helper.Type2ReadMethod("r", typeOfT))
                     .BraceOut();
 
                 tf.AddLine();
@@ -251,7 +264,7 @@ namespace CodeDomCs2
 
                 tf.AddS("public static void RemoveByIndex_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
-                        .AddS("int index = r.{0}();", Helper.Type2ReadMethod(typeof(int)))
+                        .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("rv.RemoveAt(index);")
                     .BraceOut();
 
@@ -272,7 +285,7 @@ namespace CodeDomCs2
 
                     tf.AddS("public static void RemoveByUid_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                         .BraceIn()
-                            .AddS("ulong uid = r.{0}();", Helper.Type2ReadMethod(typeof(ulong)))
+                            .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
                             .AddS("{0} _y = rv.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
                             .AddS("rv.Remove(_y);")
                         .BraceOut();
@@ -289,7 +302,7 @@ namespace CodeDomCs2
 
                     tf.AddS("public static void GetByIndex_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                         .BraceIn()
-                        .AddS("int index = r.{0}();", Helper.Type2ReadMethod(typeof(int)))
+                        .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("{0}.Sync(r, rv[index]);", Compiler_Config.GetTypeGenClassName(typeOfT))
                         .BraceOut();
 
@@ -310,14 +323,23 @@ namespace CodeDomCs2
                     .AddS("using dp;")
                     .AddS("using System.Collections;")
                     .AddS("using System.Collections.Generic;")
+                    .AddS("using Swift;")
                     .AddLine();
+            }
+
+            // namespace
+            TextFile tfNamespace;
+            {
+                tfNamespace = tfFile.AddS("namespace dp")
+                    .BraceIn();
+                tfNamespace.BraceOut().AddLine();
             }
 
             List<string> enumNames = new List<string>();
 
-                TextFile tfClass = tfFile.AddS("public class {0} : {1}", Compiler_Config.GetTypeGenClassName(type), Compiler_Config.BASE_NAME)
-                    .BraceIn();
-                    tfClass.BraceOut();
+            TextFile tfClass = tfNamespace.AddS("public class {0} : {1}", Compiler_Config.GetTypeGenClassName(type), Compiler_Config.BASE_NAME)
+                .BraceIn();
+            tfClass.BraceOut();
 
             // constructor
             {
@@ -325,9 +347,9 @@ namespace CodeDomCs2
                     .BraceIn().BraceOut();
 
 
-                tfClass.AddS("public {0}({1} v, {2} parent, params object[] ops)", 
+                tfClass.AddS("public {0}({1} v, {2} parent, params object[] ops)",
                     Compiler_Config.GetTypeGenClassName(type), Helper.GetTypeFullName(type), Compiler_Config.BASE_NAME)
-                    
+
                     .BraceIn()
                     .AddS("this.v = v;")
                     .AddS("Init(parent, ops);")
@@ -339,11 +361,11 @@ namespace CodeDomCs2
                 tfClass.AddLine().AddS("{0} v;", Helper.GetTypeFullName(type)).AddLine();
             }
 
-            if (Helper.TypeIsList(type))
+            if (Helper.TypeIsList(type) && CanTypeBeExported(type))
             {
                 CreateListFuncs(tfClass, type, enumNames);
             }
-            else if (Helper.TypeIsDict(type))
+            else if (Helper.TypeIsDict(type) && CanTypeBeExported(type))
             {
                 CreateDictFuncs(tfClass, type, enumNames);
             }
@@ -352,41 +374,59 @@ namespace CodeDomCs2
                 // fields
                 {
                     FieldInfo[] fields = type.GetFields(BindingFlagsField);
+                    PropertyInfo[] pros = type.GetProperties(BindingFlagsProperty);
+                    List<object[]> lst = new List<object[]>();
                     foreach (var field in fields)
                     {
-                        if (IsTypeSerializable(field.FieldType))
+                        if (!field.IsInitOnly)
+                            lst.Add(new object[] { field.FieldType, field.Name });
+                    }
+                    foreach (var p in pros)
+                    {
+                        if (p.CanRead && p.CanWrite)
+                            lst.Add(new object[] { p.PropertyType, p.Name });
+                    }
+
+                    foreach (var l in lst)
+                    {
+                        Type mType = (Type)l[0];
+                        string mName = (string)l[1];
+
+                        if (IsTypeSerializable(mType))
                         {
-                            string enumName = field.Name + "_Update";
+                            string enumName = mName + "_Update";
                             enumNames.Add(enumName);
 
-                            tfClass.AddS("public void {0}_Update(IWriteableBuffer w)", field.Name)
+                            tfClass.AddS("public void {0}_Update(IWriteableBuffer w)", mName)
                             .BraceIn()
-                            .AddS("Write(w, Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, field.Name)
+                            .AddS("Write(w, Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, mName)
                             .BraceOut();
 
-                            tfClass.AddS("public static void {0}_Update_sync(IReadableBuffer r, {1} rv)", field.Name, Helper.GetTypeFullName(type))
+                            tfClass.AddS("public static void {0}_Update_sync(IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
                                 .BraceIn()
-                                .AddS("rv.{0} = r.{1}();", field.Name, Helper.Type2ReadMethod(field.FieldType))
+                                .AddS("rv.{0} = {1}();", mName, Helper.Type2ReadMethod("r", mType))
                                 .BraceOut();
 
                             tfClass.AddLine();
                         }
 
-                        //if (field.FieldType.IsClass)
-                        if (typeof(ISerializable).IsAssignableFrom(field.FieldType)
-                            || Helper.TypeIsList(field.FieldType))
+                        //if (mType.IsClass)
+                        if (typeof(ISerializable).IsAssignableFrom(mType)
+                            || (Helper.TypeIsList(mType) && CanTypeBeExported(mType))
+                            || (Helper.TypeIsDict(mType) && CanTypeBeExported(mType))
+                            )
                         {
-                            enumNames.Add(field.Name);
-                            tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(field.FieldType), field.Name)
+                            enumNames.Add(mName);
+                            tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(mType), mName)
                                 .BraceIn()
                                 .AddS("return new {0}(v.{1}, this, {2}.{1});",
-                                    Compiler_Config.GetTypeGenClassName(field.FieldType),
-                                    field.Name, Compiler_Config.ENUM_NAME)
+                                    Compiler_Config.GetTypeGenClassName(mType),
+                                    mName, Compiler_Config.ENUM_NAME)
                                 .BraceOut();
 
-                            tfClass.AddS("public static void {0}_sync(IReadableBuffer r, {1} rv)", field.Name, Helper.GetTypeFullName(type))
+                            tfClass.AddS("public static void {0}_sync(IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
                                 .BraceIn()
-                                .AddS("{0}.Sync(r, rv.{1});", Compiler_Config.GetTypeGenClassName(field.FieldType), field.Name)
+                                .AddS("{0}.Sync(r, rv.{1});", Compiler_Config.GetTypeGenClassName(mType), mName)
                                 .BraceOut();
 
                             tfClass.AddLine();
@@ -409,7 +449,7 @@ namespace CodeDomCs2
 
                 TextFile tfSync = tfClass.AddS("public static void Sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(type))
                     .BraceIn();
-                TextFile tfSwitch = tfSync.AddS("{0} op = ({0})r.{1}();", Compiler_Config.ENUM_NAME, Helper.Type2ReadMethod(typeof(int)))
+                TextFile tfSwitch = tfSync.AddS("{0} op = ({0}){1}();", Compiler_Config.ENUM_NAME, Helper.Type2ReadMethod("r", typeof(int)))
                     .AddS("switch (op)")
                     .BraceIn();
 
@@ -429,6 +469,7 @@ namespace CodeDomCs2
             }
 
             Console.Write(tfFile.Format(-1));
+            Directory.CreateDirectory(outputDir);
             File.WriteAllText(outputDir + "\\" + Compiler_Config.GetTypeGenClassName(type) + ".cs", tfFile.Format(-1));
         }
     }

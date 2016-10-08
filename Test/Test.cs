@@ -1,11 +1,13 @@
-﻿using System;
+﻿
+using Swift;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Nova;
+using dp;
 
-namespace CodeDomCs2
+namespace CsDataUpdateProtocol
 {
     class Test
     {
@@ -24,11 +26,11 @@ namespace CodeDomCs2
             //string s = t.Format(-1);
             //Console.Write(s);
 
-            //new CodeDomCs2.Compiler().Compile(typeof(UserInfo), "D:\\Code\\CsDataUpdateProtocol\\Gen");
-            //return;
+            new dp.Compiler().Compile(typeof(UserInfo), "D:\\Code\\CsDataUpdateProtocol\\Gen");
+            return;
 
 
-            UserInfo infoServer = new UserInfo();
+            /*UserInfo infoServer = new UserInfo();
             UserInfo infoClient = new UserInfo();
 
             //infoServer.Money = 5;
@@ -46,7 +48,13 @@ namespace CodeDomCs2
 
             dpNova_UserInfo x = new dpNova_UserInfo(infoServer, null);
             {
-                
+                var n = new ActorHeroData();
+                n.Name = "qiucw";
+                infoServer.DH.Add(1, n);
+                x.DH().Set(w, 1, n);
+
+                infoServer.DH.Clear();
+                x.DH().Remove(w, 1);
             }
 
             //{
@@ -83,7 +91,7 @@ namespace CodeDomCs2
                 dpNova_UserInfo.Sync(r, infoClient);
 
             //Console.WriteLine(infoClient.Lst[0]);
-            Console.WriteLine("PerfectEnd ? " + (d.PerfectEnd() ? "1" : "0"));
+            Console.WriteLine("PerfectEnd ? " + (d.PerfectEnd() ? "1" : "0"));*/
         }
     }
 }

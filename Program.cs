@@ -2,16 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Nova;
 
-namespace CodeDomCs2
+namespace CsDataUpdateProtocol
 {
     class Program
     {
         static void Main(string[] args)
         {
-            
+            Test.DoTest();
         }
     }
 }
