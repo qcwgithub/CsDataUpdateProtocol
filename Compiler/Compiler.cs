@@ -29,12 +29,13 @@ namespace dp
             //| BindingFlags.DeclaredOnly
                 ;
 
-        bool IsTypeSerializableAndBasic(Type type)
+        bool TypeIsBasic(Type type)
         {
             return type.IsEnum ||
                 type == typeof(bool) ||
                 type == typeof(char) ||
                 type == typeof(byte) ||
+                type == typeof(sbyte) ||
                 type == typeof(short) ||
                 type == typeof(ushort) ||
                 type == typeof(int) ||
@@ -45,32 +46,70 @@ namespace dp
                 type == typeof(double) ||
                 type == typeof(string);
         }
-        bool IsTypeSerializable(Type type)
+
+        bool TypeIsISerializable___(Type type)
         {
-            return (IsTypeSerializableAndBasic(type) ||
-                typeof(ISerializable).IsAssignableFrom(type));
+            return typeof(ISerializable).IsAssignableFrom(type);
+        }
+        
+        bool TypeIsSerializable(Type type)
+        {
+            return TypeIsBasic(type) || TypeIsISerializable___(type);
         }
 
-        bool CanTypeBeExported(Type type)
+        bool TypeCanBeExported(Type type)
         {
-            if (IsTypeSerializable(type))
+            if (TypeIsSerializable(type))
                 return true;
 
             if (Helper.TypeIsDict(type))
             {
                 Type[] arr = type.GetGenericArguments();
-                bool keyOk = IsTypeSerializableAndBasic(arr[0]);
-                bool valueOk = IsTypeSerializable(arr[1]);
+                bool keyOk = TypeIsBasic(arr[0]);
+                bool valueOk = TypeIsSerializable(arr[1]);
                 return (keyOk && valueOk);
             }
             else if (Helper.TypeIsList(type))
             {
                 Type typeOfT = type.GetGenericArguments()[0];
-                return (IsTypeSerializable(typeOfT));
+                return (TypeIsSerializable(typeOfT));
             }
             return false;
         }
 
+        List<object[]> GetTypeSupportFieldsAndPros(Type type)
+        {
+            List<object[]> l = new List<object[]>();
+
+            FieldInfo[] fields = type.GetFields(BindingFlagsField);
+            for (int i = 0; i < fields.Length; i++)
+            {
+                FieldInfo field = fields[i];
+
+                // readonly
+                if (!field.IsInitOnly &&
+                    TypeCanBeExported(field.FieldType)
+                    )
+                {
+                    l.Add(new object[]{ field.FieldType, field.Name });
+                }
+            }
+
+            PropertyInfo[] properties = type.GetProperties(BindingFlagsProperty);
+            for (int i = 0; i < properties.Length; i++)
+            {
+                PropertyInfo pro = properties[i];
+
+                if (pro.CanRead && pro.CanWrite &&
+                    TypeCanBeExported(pro.PropertyType)
+                    )
+                {
+                    l.Add(new object[] { pro.PropertyType, pro.Name });
+                }
+            }
+
+            return l;
+        }
 
         HashSet<Type> hsAllTypes = null;
         void TravelGetTypes(Type type)
@@ -78,7 +117,7 @@ namespace dp
             if (hsAllTypes.Contains(type))
                 return;
 
-            if (!CanTypeBeExported(type))
+            if (!TypeCanBeExported(type))
                 return;
 
             if (Helper.TypeIsDict(type))
@@ -91,40 +130,14 @@ namespace dp
                 hsAllTypes.Add(type);
                 TravelGetTypes(type.GetGenericArguments()[0]);
             }
-            else if (IsTypeSerializable(type))
+            else if (TypeIsISerializable___(type))
             {
-                if (typeof(ISerializable).IsAssignableFrom(type))
+                hsAllTypes.Add(type);
+
+                List<object[]> l = GetTypeSupportFieldsAndPros(type);
+                foreach (var a in l)
                 {
-                    hsAllTypes.Add(type);
-
-                    FieldInfo[] fields = type.GetFields(BindingFlagsField);
-                    for (int i = 0; i < fields.Length; i++)
-                    {
-                        FieldInfo field = fields[i];
-                        Type varType = field.FieldType;
-                        string varName = field.Name;
-
-                        // readonly
-                        if (field.IsInitOnly)
-                            continue;
-
-                        TravelGetTypes(varType);
-                    }
-
-                    PropertyInfo[] properties = type.GetProperties(BindingFlagsProperty);
-                    for (int i = 0; i < properties.Length; i++)
-                    {
-                        PropertyInfo pro = properties[i];
-                        Type varType = pro.PropertyType;
-                        string varName = pro.Name;
-
-                        if (!pro.CanRead || !pro.CanWrite)
-                        {
-                            continue;
-                        }
-
-                        TravelGetTypes(varType);
-                    }
+                    TravelGetTypes((Type)a[0]);
                 }
             }
         }
@@ -271,44 +284,41 @@ namespace dp
                 tf.AddLine();
             }
 
-
-            //if (typeOfT.IsClass)
-            if (typeof(ISerializable).IsAssignableFrom(typeOfT))
+            if (TypeIsISerializable___(typeOfT))
             {
+                enumNames.Add("GetByIndex");
+                tf.AddS("public {0} GetByIndex(int index)", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .BraceIn()
+                    .AddS("return new {0}(v[index], this, {1}.GetByIndex, index);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
+                    .BraceOut();
 
-                {
-                    enumNames.Add("RemoveByUid");
-                    tf.AddS("public void RemoveByUid(IWriteableBuffer w, ulong uid)")
-                        .BraceIn()
-                        .AddS("Write(w, Ops, {0}.RemoveByUid, uid);", Compiler_Config.ENUM_NAME)
-                        .BraceOut();
+                tf.AddS("public static void GetByIndex_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                    .BraceIn()
+                    .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
+                    .AddS("{0}.Sync(r, rv[index]);", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .BraceOut();
 
-                    tf.AddS("public static void RemoveByUid_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
-                        .BraceIn()
-                            .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
-                            .AddS("{0} _y = rv.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
-                            .AddS("rv.Remove(_y);")
-                        .BraceOut();
-
-                    tf.AddLine();
-                }
-
-                {
-                    enumNames.Add("GetByIndex");
-                    tf.AddS("public {0} GetByIndex(int index)", Compiler_Config.GetTypeGenClassName(typeOfT))
-                        .BraceIn()
-                        .AddS("return new {0}(v[index], this, {1}.GetByIndex, index);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
-                        .BraceOut();
-
-                    tf.AddS("public static void GetByIndex_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
-                        .BraceIn()
-                        .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
-                        .AddS("{0}.Sync(r, rv[index]);", Compiler_Config.GetTypeGenClassName(typeOfT))
-                        .BraceOut();
-
-                    tf.AddLine();
-                }
+                tf.AddLine();
             }
+
+            if (typeof(SerializableDataWithID).IsAssignableFrom(typeOfT))
+            {
+                enumNames.Add("RemoveByUid");
+                tf.AddS("public void RemoveByUid(IWriteableBuffer w, ulong uid)")
+                    .BraceIn()
+                    .AddS("Write(w, Ops, {0}.RemoveByUid, uid);", Compiler_Config.ENUM_NAME)
+                    .BraceOut();
+
+                tf.AddS("public static void RemoveByUid_sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                    .BraceIn()
+                        .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
+                        .AddS("{0} _y = rv.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
+                        .AddS("rv.Remove(_y);")
+                    .BraceOut();
+
+                tf.AddLine();
+            }
+
         }
 
         void CompileOneType(Type type, string outputDir)
@@ -361,39 +371,28 @@ namespace dp
                 tfClass.AddLine().AddS("{0} v;", Helper.GetTypeFullName(type)).AddLine();
             }
 
-            if (Helper.TypeIsList(type) && CanTypeBeExported(type))
+            if (Helper.TypeIsList(type) && TypeCanBeExported(type))
             {
                 CreateListFuncs(tfClass, type, enumNames);
             }
-            else if (Helper.TypeIsDict(type) && CanTypeBeExported(type))
+            else if (Helper.TypeIsDict(type) && TypeCanBeExported(type))
             {
                 CreateDictFuncs(tfClass, type, enumNames);
             }
             else
             {
-                // fields
+                // fields & properties
                 {
-                    FieldInfo[] fields = type.GetFields(BindingFlagsField);
-                    PropertyInfo[] pros = type.GetProperties(BindingFlagsProperty);
-                    List<object[]> lst = new List<object[]>();
-                    foreach (var field in fields)
-                    {
-                        if (!field.IsInitOnly)
-                            lst.Add(new object[] { field.FieldType, field.Name });
-                    }
-                    foreach (var p in pros)
-                    {
-                        if (p.CanRead && p.CanWrite)
-                            lst.Add(new object[] { p.PropertyType, p.Name });
-                    }
-
+                    List<object[]> lst = GetTypeSupportFieldsAndPros(type);
                     foreach (var l in lst)
                     {
                         Type mType = (Type)l[0];
                         string mName = (string)l[1];
 
-                        if (IsTypeSerializable(mType))
+                        if (TypeIsSerializable(mType))
                         {
+                            // 可序列化对象产生 Update 函数
+
                             string enumName = mName + "_Update";
                             enumNames.Add(enumName);
 
@@ -410,11 +409,7 @@ namespace dp
                             tfClass.AddLine();
                         }
 
-                        //if (mType.IsClass)
-                        if (typeof(ISerializable).IsAssignableFrom(mType)
-                            || (Helper.TypeIsList(mType) && CanTypeBeExported(mType))
-                            || (Helper.TypeIsDict(mType) && CanTypeBeExported(mType))
-                            )
+                        if (!TypeIsBasic(mType))
                         {
                             enumNames.Add(mName);
                             tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(mType), mName)
@@ -451,7 +446,8 @@ namespace dp
                     .BraceIn();
                 TextFile tfSwitch = tfSync.AddS("{0} op = ({0}){1}();", Compiler_Config.ENUM_NAME, Helper.Type2ReadMethod("r", typeof(int)))
                     .AddS("switch (op)")
-                    .BraceIn();
+                    .AddS("{");
+                    //.BraceIn();
 
                 foreach (var n in enumNames)
                 {
@@ -464,7 +460,9 @@ namespace dp
                 }
                 tfSwitch.AddS("default:").In().AddS("break;").Out();
 
-                tfSwitch.BraceOut();
+                tfSwitch.AddS("}");
+                //tfSwitch.BraceOut();
+
                 tfSync.BraceOut();
             }
 
