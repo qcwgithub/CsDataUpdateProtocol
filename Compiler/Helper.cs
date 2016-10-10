@@ -37,6 +37,10 @@ namespace dp
             {
                 return objExp + ".Read<" + GetTypeFullName(type) + ">";
             }
+            else if (typeof(Swift.ISerializable[]).IsAssignableFrom(type))
+            {
+                return objExp + ".Read<" + GetTypeFullName(type) + "[]>";
+            }
             else
                 throw new Exception("..........");
         }

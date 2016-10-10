@@ -30,7 +30,7 @@ namespace CsDataUpdateProtocol
             return;
 
 
-            /*UserInfo infoServer = new UserInfo();
+            UserInfo infoServer = new UserInfo();
             UserInfo infoClient = new UserInfo();
 
             //infoServer.Money = 5;
@@ -57,17 +57,17 @@ namespace CsDataUpdateProtocol
                 x.DH().Remove(w, 1);
             }
 
-            //{
-            //    infoServer.Lst.Add(66);
-            //    infoServer.Lst.Add(77);
-            //    new dpNova_UserInfo(infoServer, null).Lst().Add(w, 2);
+            {
+                infoServer.Lst.Add(66);
+                infoServer.Lst.Add(77);
+                new dpNova_UserInfo(infoServer, null).Lst().Add(w, 2);
 
-            //    infoServer.Lst.Insert(1, 88);
-            //    new dpNova_UserInfo(infoServer, null).Lst().Insert(w, 1);
+                infoServer.Lst.Insert(1, 88);
+                new dpNova_UserInfo(infoServer, null).Lst().Insert(w, 1);
 
-            //    infoServer.Lst.RemoveAt(2);
-            //    new dpNova_UserInfo(infoServer, null).Lst().RemoveByIndex(w, 2);
-            //}
+                infoServer.Lst.RemoveAt(2);
+                new dpNova_UserInfo(infoServer, null).Lst().RemoveByIndex(w, 2);
+            }
             //{
             //    ActorHeroData heroData = new ActorHeroData();
             //    heroData.UniqueID = 123456;
@@ -91,7 +91,7 @@ namespace CsDataUpdateProtocol
                 dpNova_UserInfo.Sync(r, infoClient);
 
             //Console.WriteLine(infoClient.Lst[0]);
-            Console.WriteLine("PerfectEnd ? " + (d.PerfectEnd() ? "1" : "0"));*/
+            Console.WriteLine("PerfectEnd ? " + (d.PerfectEnd() ? "1" : "0"));
         }
     }
 }
