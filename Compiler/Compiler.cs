@@ -432,15 +432,21 @@ namespace dp
 
             if (enumNames.Count > 0)
             {
+                // 枚举定义
+
                 TextFile tfEnum = tfClass.AddS("public enum {0}", Compiler_Config.ENUM_NAME)
                     .BraceIn();
+                int enumV = 0;
                 foreach (var n in enumNames)
                 {
-                    tfEnum.AddS(n + ",");
+                    tfEnum.AddS("{0} = {1},", n, enumV);
+                    enumV++;
                 }
                 tfEnum.BraceOut();
 
                 tfClass.AddLine();
+
+                // Sync函数
 
                 TextFile tfSync = tfClass.AddS("public static void Sync(IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(type))
                     .BraceIn();
