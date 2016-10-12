@@ -9,7 +9,7 @@ namespace dp
     {
         public const string CLASS_PREFIX = "dp";
         public const string BASE_NAME = "dpBase";
-        public const string ENUM_NAME = "Oper";
+        public const string ENUM_NAME = "Op";
 
         public static string GetTypeGenClassName(Type type)
         {

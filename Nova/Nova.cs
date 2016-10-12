@@ -90,11 +90,11 @@ namespace Nova
         //public long Star;
         //public string Name;
         //public SearchOption so;
-        public ActorHeroData hero;
-        public List<ActorHeroData> Heros;
-        public List<int> Lst;
+        public ActorHeroData hero = new ActorHeroData();
+        public List<ActorHeroData> Heros = new List<ActorHeroData>();
+        public List<int> Lst = new List<int>();
         public int Money;
-        public Dictionary<int, ActorHeroData> DH;
+        public Dictionary<int, ActorHeroData> DH = new Dictionary<int, ActorHeroData>();
     }
     public class NetData
     {
