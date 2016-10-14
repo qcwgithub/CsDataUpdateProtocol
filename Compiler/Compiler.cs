@@ -231,6 +231,7 @@ namespace dp
 
             // Clear
             {
+                tf.AddS("// Clear");
                 enumNames.Add("Clear");
                 tf.AddS("public void Clear()")
                     .BraceIn()
@@ -252,13 +253,21 @@ namespace dp
             // Add
             {
                 enumNames.Add("Add");
-                TextFile tfAdd = tf.AddS("public void Add(int count)")
+                tf.AddS("// 在调用这个函数之前，服务器必须已经Add完毕");
+                TextFile tfAdd = tf.AddS("public void Add_Count(int count)")
                     .BraceIn()
                         .AddS("Write(Ops, {0}.Add, count);", Compiler_Config.ENUM_NAME)
                         .AddS("for (int i = v.Count - count; i < v.Count; i++)")
                         .BraceIn()
                             .AddS("Write(v[i]);")
                         .BraceOut()
+                    .BraceOut();
+
+                tf.AddS("// Add一个指定值");
+                tf.AddS("public void Add_Value({0} value_)", Helper.GetTypeFullName(typeOfT))
+                    .BraceIn()
+                        .AddS("Write(Ops, {0}.Add, 1);", Compiler_Config.ENUM_NAME)
+                        .AddS("Write(value_);")
                     .BraceOut();
 
                 tf.AddS("public static void Add_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -280,10 +289,17 @@ namespace dp
 
             // Insert
             {
+                tf.AddS("// Insert");
                 enumNames.Add("Insert");
                 tf.AddS("public void Insert(int index)")
                     .BraceIn()
                     .AddS("Write(Ops, {0}.Insert, index, v[index]);", Compiler_Config.ENUM_NAME)
+                    .BraceOut();
+
+
+                tf.AddS("public void Insert(int index, {0} value_)", Helper.GetTypeFullName(typeOfT))
+                    .BraceIn()
+                    .AddS("Write(Ops, {0}.Insert, index, value_);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Insert_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -302,6 +318,7 @@ namespace dp
 
             // RemoveAt
             {
+                tf.AddS("// 移除第i个元素");
                 enumNames.Add("RemoveAt");
                 tf.AddS("public void RemoveAt(int index)")
                     .BraceIn()
@@ -324,6 +341,7 @@ namespace dp
 
             if (TypeIsISerializable___(typeOfT))
             {
+                tf.AddS("// GetByIndex");
                 enumNames.Add("GetByIndex");
                 tf.AddS("public {0} GetByIndex(int index)", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
@@ -348,6 +366,7 @@ namespace dp
 
             if (typeof(SerializableDataWithID).IsAssignableFrom(typeOfT))
             {
+                tf.AddS("// GetByUid");
                 enumNames.Add("GetByUid");
                 tf.AddS("public {0} GetByUid(ulong uid)", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
@@ -372,6 +391,7 @@ namespace dp
 
                 tf.AddLine();
 
+                tf.AddS("// RemoveByUid");
                 enumNames.Add("RemoveByUid");
                 tf.AddS("public void RemoveByUid(ulong uid)")
                     .BraceIn()
@@ -475,6 +495,11 @@ namespace dp
                             .AddS("Write(Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, mName)
                             .BraceOut();
 
+                            tfClass.AddS("public void {0}_Set({1} value_)", mName, Helper.GetTypeFullName(mType))
+                            .BraceIn()
+                            .AddS("Write(Ops, {0}.{1}, value_);", Compiler_Config.ENUM_NAME, enumName)
+                            .BraceOut();
+
                             tfClass.AddS("public static void {0}_Update_Sync(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
                                 .BraceIn()
                                 .AddS("var nv = {0}();", Helper.Type2ReadMethod("r", mType))
@@ -491,6 +516,7 @@ namespace dp
                         if (!TypeIsBasic(mType))
                         {
                             enumNames.Add(mName);
+                            // 不要用函数形式了
                             //tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(mType), mName)
                             //    .BraceIn()
                             //    .AddS("return new {0}(w, v.{1}, this, {2}.{1});",
@@ -535,6 +561,7 @@ namespace dp
 
                 // Sync函数
 
+                tfClass.AddS("// 客户端使用");
                 TextFile tfSync = tfClass.AddS("public static void Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(type))
                     .BraceIn();
                 TextFile tfSwitch = tfSync.AddS("{0} op = ({0}){1}();", Compiler_Config.ENUM_NAME, Helper.Type2ReadMethod("r", typeof(int)))

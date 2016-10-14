@@ -113,7 +113,8 @@ namespace CsDataUpdateProtocol
                     {
                         info.Lst.Add(66);
                         info.Lst.Add(77);
-                        dp.Lst.Add(2);
+                        dp.Lst.Add_Value(66);
+                        dp.Lst.Add_Value(77);
 
                         info.Lst.Insert(1, 88);
                         dp.Lst.Insert(1);
@@ -128,7 +129,7 @@ namespace CsDataUpdateProtocol
                     {
                         ItemInfo equip = new ItemInfo() { UniqueID = 786897 };
                         info.Hero.Equips.Add(equip);
-                        dp.Hero.Equips.Add(1);
+                        dp.Hero.Equips.Add_Value(equip);
 
                         equip.Num = 56;
                         //dp.Hero().Equips().GetByIndex(0).Num_Update();
@@ -143,7 +144,7 @@ namespace CsDataUpdateProtocol
                         heroData.Name = "霜狼督军";
 
                         info.Heros.Add(heroData);
-                        dp.Heros.Add(1);
+                        dp.Heros.Add_Count(1);
 
                         heroData.Name = "恶魔猎手";
                         dp.Heros[0].Name_Update();

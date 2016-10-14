@@ -65,6 +65,10 @@ namespace dp
             return null;
         }
 
+        public TextFile ProSetIn()
+        {
+            return AddS("set").BraceIn();
+        }
         public TextFile ProGetIn()
         {
             return AddS("get").BraceIn();
@@ -80,6 +84,10 @@ namespace dp
             return Ch[Ch.Count - 1];
         }
 
+        public TextFile ProSetOut()
+        {
+            return BraceOut();
+        }
         public TextFile ProGetOut()
         {
             return BraceOut();
