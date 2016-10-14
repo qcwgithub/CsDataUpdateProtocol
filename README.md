@@ -24,7 +24,6 @@
         public List<ActorHeroData> Heros; // 所有英雄
     }
 
-
     // 服务器代码
     {
         UserInfo info; // 玩家数据
@@ -48,13 +47,13 @@
 
     // 客户端代码
     {
-        UserInfo info;
+        UserInfo info; // 客户端玩家数据
         IReadableBuffer r; // 代表一个缓冲区，用于接收服务器数据
         
         while (r.Available > 0) { // 一直读数据，直到结束
             dp.dpNova_UserInfo.Update(r, info);
         }
         
-        // 以上代码执行完成后，客户端的金钱、英雄经验等均自动与服务器同步了
+        // 以上代码执行完成后，客户端 UserInfo 的金钱、英雄经验等均自动与服务器同步了
     }
 ```    
