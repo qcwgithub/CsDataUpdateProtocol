@@ -142,16 +142,6 @@ namespace dp
             }
         }
 
-        public void Compile(Type type, string outputDir)
-        {
-            hsAllTypes = new HashSet<Type>();
-            TravelGetTypes(type);
-            foreach (var t in hsAllTypes)
-            {
-                CompileOneType(t, outputDir);
-            }
-        }
-
         void CreateDictFuncs(TextFile tf, Type typeOfDict, List<string> enumNames)
         {
             Type typeOfKey = typeOfDict.GetGenericArguments()[0];
@@ -167,7 +157,7 @@ namespace dp
                     .AddS("Write(Ops, {0}.Clear);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void Clear_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
+                tf.AddS("public static void Clear_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
                     .AddS("hook.DoAction1();")
                     //.In()
@@ -186,7 +176,7 @@ namespace dp
                     .AddS("Write(Ops, {0}.Remove, key);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void Remove_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
+                tf.AddS("public static void Remove_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
                     .AddS("{0} key = {1}();", keyFullname, Helper.Type2ReadMethod("r", typeOfKey))
                     .AddS("hook.Push(key);")
@@ -207,7 +197,7 @@ namespace dp
                         .AddS("Write(Ops, {0}.Set, key, value_);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void Set_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
+                tf.AddS("public static void Set_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
                     .AddS("{0} key = {1}();", Helper.GetTypeFullName(typeOfKey), Helper.Type2ReadMethod("r", typeOfKey), Helper.Type2ReadMethod("r", typeOfValue))
                     .AddS("{0} value_ = {1}();", valueFullname, Helper.Type2ReadMethod("r", typeOfValue), Helper.Type2ReadMethod("r", typeOfValue))
@@ -238,7 +228,7 @@ namespace dp
                     .AddS("Write(Ops, {0}.Clear);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void Clear_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void Clear_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                     .AddS("hook.DoAction1();")
                     //.In()
@@ -253,24 +243,28 @@ namespace dp
             // Add
             {
                 enumNames.Add("Add");
-                tf.AddS("// 在调用这个函数之前，服务器必须已经Add完毕");
-                TextFile tfAdd = tf.AddS("public void Add_Count(int count)")
-                    .BraceIn()
-                        .AddS("Write(Ops, {0}.Add, count);", Compiler_Config.ENUM_NAME)
-                        .AddS("for (int i = v.Count - count; i < v.Count; i++)")
-                        .BraceIn()
-                            .AddS("Write(v[i]);")
-                        .BraceOut()
-                    .BraceOut();
+                //tf.AddS("// 在调用这个函数之前，服务器必须已经Add完毕");
+                //TextFile tfAdd = tf.AddS("public void Add_Count(int count)")
+                //    .BraceIn()
+                //        .AddS("Write(Ops, {0}.Add, count);", Compiler_Config.ENUM_NAME)
+                //        .AddS("for (int i = v.Count - count; i < v.Count; i++)")
+                //        .BraceIn()
+                //            .AddS("Write(v[i]);")
+                //        .BraceOut()
+                //    .BraceOut();
 
                 tf.AddS("// Add一个指定值");
-                tf.AddS("public void Add_Value({0} value_)", Helper.GetTypeFullName(typeOfT))
+                tf.AddS("public void Add({0} value_, params {0}[] more)", Helper.GetTypeFullName(typeOfT))
                     .BraceIn()
-                        .AddS("Write(Ops, {0}.Add, 1);", Compiler_Config.ENUM_NAME)
+                        .AddS("Write(Ops, {0}.Add, 1 + more.Length);", Compiler_Config.ENUM_NAME)
                         .AddS("Write(value_);")
+                        .AddS("for (int i = 0; i < more.Length; i++)")
+                        .In()
+                            .AddS("Write(more[i]);")
+                        .Out()
                     .BraceOut();
 
-                tf.AddS("public static void Add_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void Add_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                         .AddS("int count = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(count);")
@@ -291,10 +285,10 @@ namespace dp
             {
                 tf.AddS("// Insert");
                 enumNames.Add("Insert");
-                tf.AddS("public void Insert(int index)")
-                    .BraceIn()
-                    .AddS("Write(Ops, {0}.Insert, index, v[index]);", Compiler_Config.ENUM_NAME)
-                    .BraceOut();
+                //tf.AddS("public void Insert(int index)")
+                //    .BraceIn()
+                //    .AddS("Write(Ops, {0}.Insert, index, v[index]);", Compiler_Config.ENUM_NAME)
+                //    .BraceOut();
 
 
                 tf.AddS("public void Insert(int index, {0} value_)", Helper.GetTypeFullName(typeOfT))
@@ -302,7 +296,7 @@ namespace dp
                     .AddS("Write(Ops, {0}.Insert, index, value_);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void Insert_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void Insert_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                         .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(index);")
@@ -325,7 +319,7 @@ namespace dp
                     .AddS("Write(Ops, {0}.RemoveAt, index);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void RemoveAt_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void RemoveAt_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                         .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(index);")
@@ -345,7 +339,7 @@ namespace dp
                 enumNames.Add("GetByIndex");
                 tf.AddS("public {0} GetByIndex(int index)", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
-                    .AddS("return new {0}(w, v[index], this, {1}.GetByIndex, index);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
+                    .AddS("return new {0}(w, this, {1}.GetByIndex, index);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
                     .BraceOut();
                 tf.AddS("public {0} this[int index]", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
@@ -354,11 +348,11 @@ namespace dp
                         .ProGetOut()
                     .BraceOut();
 
-                tf.AddS("public static void GetByIndex_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void GetByIndex_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                     .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                     .AddS("hook.Push(index);")
-                    .AddS("{0}.Sync(hook, r, rv[index]);", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .AddS("{0}.Update(hook, r, rv[index]);", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceOut();
 
                 tf.AddLine();
@@ -370,8 +364,7 @@ namespace dp
                 enumNames.Add("GetByUid");
                 tf.AddS("public {0} GetByUid(ulong uid)", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
-                    .AddS("{0} _y = v.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
-                    .AddS("return new {0}(w, _y, this, {1}.GetByUid, uid);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
+                    .AddS("return new {0}(w, this, {1}.GetByUid, uid);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
                     .BraceOut();
                 tf.AddS("public {0} this[ulong uid]", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
@@ -381,12 +374,12 @@ namespace dp
                     .BraceOut()
                     .BraceOut();
 
-                tf.AddS("public static void GetByUid_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void GetByUid_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                     .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
                     .AddS("hook.Push(uid);")
                     .AddS("{0} _y = rv.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
-                    .AddS("{0}.Sync(hook, r, _y);", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .AddS("{0}.Update(hook, r, _y);", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceOut();
 
                 tf.AddLine();
@@ -398,7 +391,7 @@ namespace dp
                     .AddS("Write(Ops, {0}.RemoveByUid, uid);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void RemoveByUid_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void RemoveByUid_Client(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                         .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
                         .AddS("hook.Push(uid);")
@@ -451,18 +444,18 @@ namespace dp
                 //    .BraceIn().BraceOut();
 
 
-                tfClass.AddS("public {0}(IWriteableBuffer w, {1} v, {2} parent, params object[] ops) : base(w, parent, ops)",
-                    Compiler_Config.GetTypeGenClassName(type), Helper.GetTypeFullName(type), Compiler_Config.BASE_NAME)
+                tfClass.AddS("public {0}(IWriteableBuffer w, {1} parent, params object[] ops) : base(w, parent, ops)",
+                    Compiler_Config.GetTypeGenClassName(type), Compiler_Config.BASE_NAME)
 
                     .BraceIn()
-                    .AddS("this.v = v;")
+                    //.AddS("this.v = v;")
                     //.AddS("Init(parent, ops);")
                     .BraceOut();
             }
 
             // v
             {
-                tfClass.AddLine().AddS("{0} v;", Helper.GetTypeFullName(type)).AddLine();
+                //tfClass.AddLine().AddS("{0} v;", Helper.GetTypeFullName(type)).AddLine();
             }
 
             if (Helper.TypeIsList(type) && TypeCanBeExported(type))
@@ -487,20 +480,20 @@ namespace dp
                         {
                             // 可序列化对象产生 Update 函数
 
-                            string enumName = mName + "_Update";
+                            string enumName = mName + "_Set";
                             enumNames.Add(enumName);
 
-                            tfClass.AddS("public void {0}_Update()", mName)
-                            .BraceIn()
-                            .AddS("Write(Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, mName)
-                            .BraceOut();
+                            //tfClass.AddS("public void {0}_Update()", mName)
+                            //.BraceIn()
+                            //.AddS("Write(Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, mName)
+                            //.BraceOut();
 
                             tfClass.AddS("public void {0}_Set({1} value_)", mName, Helper.GetTypeFullName(mType))
                             .BraceIn()
                             .AddS("Write(Ops, {0}.{1}, value_);", Compiler_Config.ENUM_NAME, enumName)
                             .BraceOut();
 
-                            tfClass.AddS("public static void {0}_Update_Sync(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
+                            tfClass.AddS("public static void {0}_Set_Client(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
                                 .BraceIn()
                                 .AddS("var nv = {0}();", Helper.Type2ReadMethod("r", mType))
                                 .AddS("hook.Push(nv);")
@@ -526,15 +519,16 @@ namespace dp
                             tfClass.AddS("public {0} {1}", Compiler_Config.GetTypeGenClassName(mType), mName)
                                 .BraceIn()
                                 .ProGetIn()
-                                .AddS("return new {0}(w, v.{1}, this, {2}.{1});",
+                                .AddS("return new {0}(w, this, {2}.{1});",
                                     Compiler_Config.GetTypeGenClassName(mType),
-                                    mName, Compiler_Config.ENUM_NAME)
+                                    mName,
+                                    Compiler_Config.ENUM_NAME)
                                 .ProGetOut()
                                 .BraceOut();
 
-                            tfClass.AddS("public static void {0}_Sync(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
+                            tfClass.AddS("public static void {0}_Client(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
                                 .BraceIn()
-                                .AddS("{0}.Sync(hook, r, rv.{1});", Compiler_Config.GetTypeGenClassName(mType), mName)
+                                .AddS("{0}.Update(hook, r, rv.{1});", Compiler_Config.GetTypeGenClassName(mType), mName)
                                 .BraceOut();
 
                             tfClass.AddLine();
@@ -559,10 +553,10 @@ namespace dp
 
                 tfClass.AddLine();
 
-                // Sync函数
+                // Update函数
 
-                tfClass.AddS("// 客户端使用");
-                TextFile tfSync = tfClass.AddS("public static void Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(type))
+                tfClass.AddS("// Client use");
+                TextFile tfSync = tfClass.AddS("public static void Update(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(type))
                     .BraceIn();
                 TextFile tfSwitch = tfSync.AddS("{0} op = ({0}){1}();", Compiler_Config.ENUM_NAME, Helper.Type2ReadMethod("r", typeof(int)))
                     .AddS("hook.Push(op);")
@@ -575,7 +569,7 @@ namespace dp
                     tfSwitch
                         .AddS("case {0}.{1}:", Compiler_Config.ENUM_NAME, n)
                         .In()
-                        .AddS("{0}_Sync(hook, r, rv);", n)
+                        .AddS("{0}_Client(hook, r, rv);", n)
                         .AddS("break;")
                         .Out();
                 }
@@ -590,6 +584,20 @@ namespace dp
             Console.Write(tfFile.Format(-1));
             Directory.CreateDirectory(outputDir);
             File.WriteAllText(outputDir + "\\" + Compiler_Config.GetTypeGenClassName(type) + ".cs", tfFile.Format(-1));
+        }
+
+        public void Compile(Type type, string outputDir)
+        {
+            hsAllTypes = new HashSet<Type>();
+            TravelGetTypes(type);
+            foreach (var t in hsAllTypes)
+            {
+                CompileOneType(t, outputDir);
+            }
+
+            {
+                TextFile tfFile = new TextFile(null, "// auto gen");
+            }
         }
     }
 }

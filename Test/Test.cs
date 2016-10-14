@@ -98,7 +98,7 @@ namespace CsDataUpdateProtocol
                 UserDataNotifier UDN = new UserDataNotifier(d);
 
                 UserInfo info = new UserInfo();
-                UDN.Notify(info, (dp) =>
+                UDN.Notify_UserInfo((dp.dpNova_UserInfo dp) =>
                 {
                     {
                         //var n = new ActorHeroData();
@@ -113,11 +113,10 @@ namespace CsDataUpdateProtocol
                     {
                         info.Lst.Add(66);
                         info.Lst.Add(77);
-                        dp.Lst.Add_Value(66);
-                        dp.Lst.Add_Value(77);
+                        dp.Lst.Add(66, 77);
 
                         info.Lst.Insert(1, 88);
-                        dp.Lst.Insert(1);
+                        dp.Lst.Insert(1, 88);
 
                         info.Lst.RemoveAt(2);
                         dp.Lst.RemoveAt(2);
@@ -129,13 +128,13 @@ namespace CsDataUpdateProtocol
                     {
                         ItemInfo equip = new ItemInfo() { UniqueID = 786897 };
                         info.Hero.Equips.Add(equip);
-                        dp.Hero.Equips.Add_Value(equip);
+                        dp.Hero.Equips.Add(equip);
 
                         equip.Num = 56;
                         //dp.Hero().Equips().GetByIndex(0).Num_Update();
                         //dp.Hero().Equips()[0].Num_Update();
                         //dp.Hero().Equips().GetByUid(786897).Num_Update();
-                        dp.Hero.Equips[equip.UniqueID].Num_Update();
+                        dp.Hero.Equips[equip.UniqueID].Num_Set(56);
                     }
 
                     {
@@ -144,10 +143,10 @@ namespace CsDataUpdateProtocol
                         heroData.Name = "霜狼督军";
 
                         info.Heros.Add(heroData);
-                        dp.Heros.Add_Count(1);
+                        dp.Heros.Add(heroData);
 
                         heroData.Name = "恶魔猎手";
-                        dp.Heros[0].Name_Update();
+                        dp.Heros[0].Name_Set(heroData.Name);
 
                         info.Heros.Remove(heroData);
                         dp.Heros.RemoveByUid(heroData.UniqueID);
@@ -155,13 +154,13 @@ namespace CsDataUpdateProtocol
 
                     {
                         info.Money = 999;
-                        dp.Money_Update();
+                        dp.Money_Set(info.Money);
 
                         info.Level = 78;
-                        dp.Level_Update();
+                        dp.Level_Set(info.Level);
 
                         info.Level = 80;
-                        dp.Level_Update();
+                        dp.Level_Set(info.Level);
                     }
                 });
             }
@@ -211,11 +210,11 @@ namespace CsDataUpdateProtocol
                     {
                         sb.AppendLine("Lst Will Be Clear");
                     }
-                    if (hook.MatchOps(dpNova_UserInfo.Op.Money_Update))
+                    if (hook.MatchOps(dpNova_UserInfo.Op.Money_Set))
                     {
                         sb.AppendLine("Money will be update, old money = " + info.Money);
                     }
-                    if (hook.MatchOps(dpNova_UserInfo.Op.Level_Update))
+                    if (hook.MatchOps(dpNova_UserInfo.Op.Level_Set))
                     {
                         hook.UserData["oldLevel"] = info.Level;
                     }
@@ -225,11 +224,11 @@ namespace CsDataUpdateProtocol
 
                 hook.Action2 = () =>
                 {
-                    if (hook.MatchOps(dpNova_UserInfo.Op.Money_Update))
+                    if (hook.MatchOps(dpNova_UserInfo.Op.Money_Set))
                     {
                         Console.WriteLine("new money = " + info.Money);
                     }
-                    if (hook.MatchOps(dpNova_UserInfo.Op.Level_Update))
+                    if (hook.MatchOps(dpNova_UserInfo.Op.Level_Set))
                     {
                         Console.WriteLine("OnLevelUp " + hook.UserData["oldLevel"] + " -> " + info.Level);
                     }
@@ -239,7 +238,7 @@ namespace CsDataUpdateProtocol
                 while (r.Available > 0)
                 {
                     hook.Clear();
-                    dpNova_UserInfo.Sync(hook, r, info);
+                    dpNova_UserInfo.Update(hook, r, info);
                 }
 
                 Console.WriteLine("PerfectEnd ? " + (d.PerfectEnd() ? "1" : "0"));
