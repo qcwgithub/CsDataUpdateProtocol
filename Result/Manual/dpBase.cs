@@ -10,9 +10,11 @@ namespace dp
     public class dpBase
     {
         public List<object> Ops = new List<object>();
-
-        protected void Init(dpBase parent, params object[] ops)
+        public IWriteableBuffer w;
+        protected dpBase(IWriteableBuffer w, dpBase parent, params object[] ops)
         {
+            this.w = w;
+
             if (parent != null)
             {
                 Ops.AddRange(parent.Ops);
@@ -26,7 +28,7 @@ namespace dp
         }
 
         static Dictionary<Type, Action<IWriteableBuffer, object>> dw;
-        static void Write(IWriteableBuffer w, Type t, object o)
+        static void SWrite(IWriteableBuffer w, Type t, object o)
         {
             if (dw == null)
             {
@@ -78,24 +80,21 @@ namespace dp
                 throw new Exception("dpBase unknown type " + t.Name);
         }
 
-        protected void Write(IWriteableBuffer w, object o)
-        {
-            Type t = o.GetType();
-            Write(w, t, o);
-        }
-
-        protected void Write(IWriteableBuffer w, params object[] objs)
+        protected void Write(params object[] objs)
         {
             foreach (var o in objs)
-                Write(w, o);
+            {
+                Type t = o.GetType();
+                SWrite(w, t, o);
+            }
         }
 
-        protected void Write(IWriteableBuffer w, List<object> lst, params object[] objs)
+        protected void Write(List<object> lst, params object[] objs)
         {
             foreach (var o in lst)
-                Write(w, o);
+                this.Write(o);
 
-            Write(w, objs);
+            this.Write(objs);
         }
     }
 }

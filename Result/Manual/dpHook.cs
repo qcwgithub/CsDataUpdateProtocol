@@ -62,5 +62,6 @@ namespace dp
 
         //    return true;
         //}
+        public Dictionary<string, object> UserData = new Dictionary<string,object>();
     }
 }

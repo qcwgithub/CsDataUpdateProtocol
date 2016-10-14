@@ -46,7 +46,9 @@
     <Compile Include="Result\Gen\dpDictionary_int__Nova_ActorHeroData.cs" />
     <Compile Include="Result\Gen\dpList_int.cs" />
     <Compile Include="Result\Gen\dpList_Nova_ActorHeroData.cs" />
+    <Compile Include="Result\Gen\dpList_Nova_ItemInfo.cs" />
     <Compile Include="Result\Gen\dpNova_ActorHeroData.cs" />
+    <Compile Include="Result\Gen\dpNova_ItemInfo.cs" />
     <Compile Include="Result\Gen\dpNova_UserInfo.cs" />
     <Compile Include="Result\Manual\dpBase.cs" />
     <Compile Include="Compiler\Helper.cs" />

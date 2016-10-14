@@ -78,11 +78,16 @@ namespace Nova
     {
         public ulong UniqueID;
     }
+    public class ItemInfo : SerializableDataWithID
+    {
+        public int Num;
+    }
 
     public class ActorHeroData : SerializableDataWithID
     {
         public int Color;
         public string Name;
+        public List<ItemInfo> Equips = new List<ItemInfo>();
     }
     public class UserInfo : SerializableData
     {
@@ -90,7 +95,8 @@ namespace Nova
         //public long Star;
         //public string Name;
         //public SearchOption so;
-        public ActorHeroData hero = new ActorHeroData();
+        public int Level;
+        public ActorHeroData Hero = new ActorHeroData();
         public List<ActorHeroData> Heros = new List<ActorHeroData>();
         public List<int> Lst = new List<int>();
         public int Money;
@@ -177,5 +183,26 @@ namespace Nova
         public void Write(string[] v) { d.Push(v); }
         public void Write(ISerializable v) { d.Push(v); }
         public void Write(ISerializable[] v) { d.Push(v); }
+    }
+
+    public class UserDataNotifier
+    {
+        NetData d;
+        public UserDataNotifier(NetData d)
+        {
+            this.d = d;
+        }
+        public void Notify(UserInfo info, Action<dp.dpNova_UserInfo> action)
+        {
+            WriteableBuffer w = new WriteableBuffer(d);
+            dp.dpNova_UserInfo dp = new dp.dpNova_UserInfo(w, info, null);
+            action(dp);
+        }
+        public void Notify(ActorHeroData heroData, Action<dp.dpNova_ActorHeroData> action)
+        {
+            WriteableBuffer w = new WriteableBuffer(d);
+            dp.dpNova_ActorHeroData dp = new dp.dpNova_ActorHeroData(w, heroData, null);
+            action(dp);
+        }
     }
 }

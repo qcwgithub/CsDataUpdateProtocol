@@ -162,9 +162,9 @@ namespace dp
 
             {
                 enumNames.Add("Clear");
-                tf.AddS("public void Clear(IWriteableBuffer w)")
+                tf.AddS("public void Clear()")
                     .BraceIn()
-                    .AddS("Write(w, Ops, {0}.Clear);", Compiler_Config.ENUM_NAME)
+                    .AddS("Write(Ops, {0}.Clear);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Clear_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
@@ -181,9 +181,9 @@ namespace dp
 
             {
                 enumNames.Add("Remove");
-                tf.AddS("public void Remove(IWriteableBuffer w, {0} key)", keyFullname)
+                tf.AddS("public void Remove({0} key)", keyFullname)
                     .BraceIn()
-                    .AddS("Write(w, Ops, {0}.Remove, key);", Compiler_Config.ENUM_NAME)
+                    .AddS("Write(Ops, {0}.Remove, key);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Remove_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
@@ -202,9 +202,9 @@ namespace dp
 
             {
                 enumNames.Add("Set");
-                tf.AddS("public void Set(IWriteableBuffer w, {0} key, {1} value_)", keyFullname, valueFullname)
+                tf.AddS("public void Set({0} key, {1} value_)", keyFullname, valueFullname)
                     .BraceIn()
-                        .AddS("Write(w, Ops, {0}.Set, key, value_);", Compiler_Config.ENUM_NAME)
+                        .AddS("Write(Ops, {0}.Set, key, value_);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Set_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
@@ -229,11 +229,12 @@ namespace dp
         {
             Type typeOfT = typeOfList.GetGenericArguments()[0];
 
+            // Clear
             {
                 enumNames.Add("Clear");
-                tf.AddS("public void Clear(IWriteableBuffer w)")
+                tf.AddS("public void Clear()")
                     .BraceIn()
-                    .AddS("Write(w, Ops, {0}.Clear);", Compiler_Config.ENUM_NAME)
+                    .AddS("Write(Ops, {0}.Clear);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Clear_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -248,14 +249,15 @@ namespace dp
                 tf.AddLine();
             }
 
+            // Add
             {
                 enumNames.Add("Add");
-                TextFile tfAdd = tf.AddS("public void Add(IWriteableBuffer w, int count)")
+                TextFile tfAdd = tf.AddS("public void Add(int count)")
                     .BraceIn()
-                        .AddS("Write(w, Ops, {0}.Add, count);", Compiler_Config.ENUM_NAME)
+                        .AddS("Write(Ops, {0}.Add, count);", Compiler_Config.ENUM_NAME)
                         .AddS("for (int i = v.Count - count; i < v.Count; i++)")
                         .BraceIn()
-                            .AddS("Write(w, v[i]);")
+                            .AddS("Write(v[i]);")
                         .BraceOut()
                     .BraceOut();
 
@@ -276,11 +278,12 @@ namespace dp
                 tf.AddLine();
             }
 
+            // Insert
             {
                 enumNames.Add("Insert");
-                tf.AddS("public void Insert(IWriteableBuffer w, int index)")
+                tf.AddS("public void Insert(int index)")
                     .BraceIn()
-                    .AddS("Write(w, Ops, {0}.Insert, index, v[index]);", Compiler_Config.ENUM_NAME)
+                    .AddS("Write(Ops, {0}.Insert, index, v[index]);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void Insert_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -297,14 +300,15 @@ namespace dp
                 tf.AddLine();
             }
 
+            // RemoveAt
             {
-                enumNames.Add("RemoveByIndex");
-                tf.AddS("public void RemoveByIndex(IWriteableBuffer w, int index)")
+                enumNames.Add("RemoveAt");
+                tf.AddS("public void RemoveAt(int index)")
                     .BraceIn()
-                    .AddS("Write(w, Ops, {0}.RemoveByIndex, index);", Compiler_Config.ENUM_NAME)
+                    .AddS("Write(Ops, {0}.RemoveAt, index);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
-                tf.AddS("public static void RemoveByIndex_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                tf.AddS("public static void RemoveAt_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                         .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(index);")
@@ -323,7 +327,14 @@ namespace dp
                 enumNames.Add("GetByIndex");
                 tf.AddS("public {0} GetByIndex(int index)", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
-                    .AddS("return new {0}(v[index], this, {1}.GetByIndex, index);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
+                    .AddS("return new {0}(w, v[index], this, {1}.GetByIndex, index);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
+                    .BraceOut();
+                tf.AddS("public {0} this[int index]", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .BraceIn()
+                    .AddS("get {")
+                    .In()
+                    .AddS("return this.GetByIndex(index);")
+                    .BraceOut()
                     .BraceOut();
 
                 tf.AddS("public static void GetByIndex_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -338,10 +349,34 @@ namespace dp
 
             if (typeof(SerializableDataWithID).IsAssignableFrom(typeOfT))
             {
-                enumNames.Add("RemoveByUid");
-                tf.AddS("public void RemoveByUid(IWriteableBuffer w, ulong uid)")
+                enumNames.Add("GetByUid");
+                tf.AddS("public {0} GetByUid(ulong uid)", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
-                    .AddS("Write(w, Ops, {0}.RemoveByUid, uid);", Compiler_Config.ENUM_NAME)
+                    .AddS("{0} _y = v.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
+                    .AddS("return new {0}(w, _y, this, {1}.GetByUid, uid);", Compiler_Config.GetTypeGenClassName(typeOfT), Compiler_Config.ENUM_NAME)
+                    .BraceOut();
+                tf.AddS("public {0} this[ulong uid]", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .BraceIn()
+                    .AddS("get {")
+                    .In()
+                    .AddS("return this.GetByUid(uid);")
+                    .BraceOut()
+                    .BraceOut();
+
+                tf.AddS("public static void GetByUid_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
+                    .BraceIn()
+                    .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
+                    .AddS("hook.Push(uid);")
+                    .AddS("{0} _y = rv.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
+                    .AddS("{0}.Sync(hook, r, _y);", Compiler_Config.GetTypeGenClassName(typeOfT))
+                    .BraceOut();
+
+                tf.AddLine();
+
+                enumNames.Add("RemoveByUid");
+                tf.AddS("public void RemoveByUid(ulong uid)")
+                    .BraceIn()
+                    .AddS("Write(Ops, {0}.RemoveByUid, uid);", Compiler_Config.ENUM_NAME)
                     .BraceOut();
 
                 tf.AddS("public static void RemoveByUid_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -393,16 +428,16 @@ namespace dp
 
             // constructor
             {
-                tfClass.AddS("public {0}()", Compiler_Config.GetTypeGenClassName(type))
-                    .BraceIn().BraceOut();
+                //tfClass.AddS("public {0}()", Compiler_Config.GetTypeGenClassName(type))
+                //    .BraceIn().BraceOut();
 
 
-                tfClass.AddS("public {0}({1} v, {2} parent, params object[] ops)",
+                tfClass.AddS("public {0}(IWriteableBuffer w, {1} v, {2} parent, params object[] ops) : base(w, parent, ops)",
                     Compiler_Config.GetTypeGenClassName(type), Helper.GetTypeFullName(type), Compiler_Config.BASE_NAME)
 
                     .BraceIn()
                     .AddS("this.v = v;")
-                    .AddS("Init(parent, ops);")
+                    //.AddS("Init(parent, ops);")
                     .BraceOut();
             }
 
@@ -436,9 +471,9 @@ namespace dp
                             string enumName = mName + "_Update";
                             enumNames.Add(enumName);
 
-                            tfClass.AddS("public void {0}_Update(IWriteableBuffer w)", mName)
+                            tfClass.AddS("public void {0}_Update()", mName)
                             .BraceIn()
-                            .AddS("Write(w, Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, mName)
+                            .AddS("Write(Ops, {0}.{1}, v.{2});", Compiler_Config.ENUM_NAME, enumName, mName)
                             .BraceOut();
 
                             tfClass.AddS("public static void {0}_Update_Sync(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
@@ -459,7 +494,7 @@ namespace dp
                             enumNames.Add(mName);
                             tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(mType), mName)
                                 .BraceIn()
-                                .AddS("return new {0}(v.{1}, this, {2}.{1});",
+                                .AddS("return new {0}(w, v.{1}, this, {2}.{1});",
                                     Compiler_Config.GetTypeGenClassName(mType),
                                     mName, Compiler_Config.ENUM_NAME)
                                 .BraceOut();
