@@ -65,6 +65,11 @@ namespace dp
             return null;
         }
 
+        public TextFile ProGetIn()
+        {
+            return AddS("get").BraceIn();
+        }
+
         public TextFile BraceIn()
         {
             return AddS("{").In();
@@ -75,6 +80,10 @@ namespace dp
             return Ch[Ch.Count - 1];
         }
 
+        public TextFile ProGetOut()
+        {
+            return BraceOut();
+        }
         public TextFile BraceOut()
         {
             return Out().AddS("}");

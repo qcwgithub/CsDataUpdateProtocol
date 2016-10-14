@@ -113,28 +113,28 @@ namespace CsDataUpdateProtocol
                     {
                         info.Lst.Add(66);
                         info.Lst.Add(77);
-                        dp.Lst().Add(2);
+                        dp.Lst.Add(2);
 
                         info.Lst.Insert(1, 88);
-                        dp.Lst().Insert(1);
+                        dp.Lst.Insert(1);
 
                         info.Lst.RemoveAt(2);
-                        dp.Lst().RemoveAt(2);
+                        dp.Lst.RemoveAt(2);
 
                         info.Lst.Clear();
-                        dp.Lst().Clear();
+                        dp.Lst.Clear();
                     }
 
                     {
                         ItemInfo equip = new ItemInfo() { UniqueID = 786897 };
                         info.Hero.Equips.Add(equip);
-                        dp.Hero().Equips().Add(1);
+                        dp.Hero.Equips.Add(1);
 
                         equip.Num = 56;
                         //dp.Hero().Equips().GetByIndex(0).Num_Update();
                         //dp.Hero().Equips()[0].Num_Update();
                         //dp.Hero().Equips().GetByUid(786897).Num_Update();
-                        dp.Hero().Equips()[equip.UniqueID].Num_Update();
+                        dp.Hero.Equips[equip.UniqueID].Num_Update();
                     }
 
                     {
@@ -143,13 +143,13 @@ namespace CsDataUpdateProtocol
                         heroData.Name = "霜狼督军";
 
                         info.Heros.Add(heroData);
-                        dp.Heros().Add(1);
+                        dp.Heros.Add(1);
 
                         heroData.Name = "恶魔猎手";
-                        dp.Heros()[0].Name_Update();
+                        dp.Heros[0].Name_Update();
 
-                        heroData.Name = "范克里夫";
-                        dp.Heros().RemoveByUid(heroData.UniqueID);
+                        info.Heros.Remove(heroData);
+                        dp.Heros.RemoveByUid(heroData.UniqueID);
                     }
 
                     {

@@ -170,9 +170,9 @@ namespace dp
                 tf.AddS("public static void Clear_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfDict))
                     .BraceIn()
                     .AddS("hook.DoAction1();")
-                    .In()
+                    //.In()
                         .AddS("rv.Clear();")
-                    .Out()
+                    //.Out()
                     .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -191,9 +191,9 @@ namespace dp
                     .AddS("{0} key = {1}();", keyFullname, Helper.Type2ReadMethod("r", typeOfKey))
                     .AddS("hook.Push(key);")
                     .AddS("hook.DoAction1();")
-                    .In()
+                    //.In()
                     .AddS("rv.Remove(key);")
-                    .Out()
+                    //.Out()
                     .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -214,10 +214,10 @@ namespace dp
                     .AddS("hook.Push(key);")
                     .AddS("hook.Push(value_);")
                     .AddS("hook.DoAction1();")
-                    .In()
+                    //.In()
                         .AddS("rv.Remove(key);")
                         .AddS("rv.Add(key, value_);")
-                    .Out()
+                    //.Out()
                     .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -240,9 +240,9 @@ namespace dp
                 tf.AddS("public static void Clear_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
                     .BraceIn()
                     .AddS("hook.DoAction1();")
-                    .In()
+                    //.In()
                         .AddS("rv.Clear();")
-                    .Out()
+                    //.Out()
                     .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -266,12 +266,12 @@ namespace dp
                         .AddS("int count = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(count);")
                         .AddS("hook.DoAction1();")
-                        .In()
+                        //.In()
                             .AddS("for (int i = 0; i < count; i++)")
                             .BraceIn()
                                 .AddS("rv.Add({0}());", Helper.Type2ReadMethod("r", typeOfT))
                             .BraceOut()
-                        .Out()
+                        //.Out()
                         .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -291,9 +291,9 @@ namespace dp
                         .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(index);")
                         .AddS("hook.DoAction1();")
-                        .In()
+                        //.In()
                             .AddS("rv.Insert(index, {0}());", Helper.Type2ReadMethod("r", typeOfT))
-                        .Out()
+                        //.Out()
                         .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -313,9 +313,9 @@ namespace dp
                         .AddS("int index = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
                         .AddS("hook.Push(index);")
                         .AddS("hook.DoAction1();")
-                        .In()
+                        //.In()
                             .AddS("rv.RemoveAt(index);")
-                        .Out()
+                        //.Out()
                         .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -331,10 +331,9 @@ namespace dp
                     .BraceOut();
                 tf.AddS("public {0} this[int index]", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
-                    .AddS("get {")
-                    .In()
-                    .AddS("return this.GetByIndex(index);")
-                    .BraceOut()
+                        .ProGetIn()
+                        .AddS("return this.GetByIndex(index);")
+                        .ProGetOut()
                     .BraceOut();
 
                 tf.AddS("public static void GetByIndex_Sync(dpHook hook, IReadableBuffer r, {0} rv)", Helper.GetTypeFullName(typeOfList))
@@ -357,8 +356,8 @@ namespace dp
                     .BraceOut();
                 tf.AddS("public {0} this[ulong uid]", Compiler_Config.GetTypeGenClassName(typeOfT))
                     .BraceIn()
-                    .AddS("get {")
-                    .In()
+                    .AddS("get")
+                    .BraceIn()
                     .AddS("return this.GetByUid(uid);")
                     .BraceOut()
                     .BraceOut();
@@ -384,10 +383,10 @@ namespace dp
                         .AddS("ulong uid = {0}();", Helper.Type2ReadMethod("r", typeof(ulong)))
                         .AddS("hook.Push(uid);")
                         .AddS("hook.DoAction1();")
-                        .In()
+                        //.In()
                             .AddS("{0} _y = rv.Find((_x) => _x.UniqueID == uid);", Helper.GetTypeFullName(typeOfT))
                             .AddS("rv.Remove(_y);")
-                        .Out()
+                        //.Out()
                         .AddS("hook.DoAction2();")
                     .BraceOut();
 
@@ -492,11 +491,19 @@ namespace dp
                         if (!TypeIsBasic(mType))
                         {
                             enumNames.Add(mName);
-                            tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(mType), mName)
+                            //tfClass.AddS("public {0} {1}()", Compiler_Config.GetTypeGenClassName(mType), mName)
+                            //    .BraceIn()
+                            //    .AddS("return new {0}(w, v.{1}, this, {2}.{1});",
+                            //        Compiler_Config.GetTypeGenClassName(mType),
+                            //        mName, Compiler_Config.ENUM_NAME)
+                            //    .BraceOut();
+                            tfClass.AddS("public {0} {1}", Compiler_Config.GetTypeGenClassName(mType), mName)
                                 .BraceIn()
+                                .ProGetIn()
                                 .AddS("return new {0}(w, v.{1}, this, {2}.{1});",
                                     Compiler_Config.GetTypeGenClassName(mType),
                                     mName, Compiler_Config.ENUM_NAME)
+                                .ProGetOut()
                                 .BraceOut();
 
                             tfClass.AddS("public static void {0}_Sync(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
