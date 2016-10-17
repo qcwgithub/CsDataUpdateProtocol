@@ -1,7 +1,7 @@
 ﻿//#define COMPILE_ACTORHERODATA
 //#define TEST_ACTORHERODATA
-//#define COMPILE_USERINFO
-#define TEST_USERINFO
+#define COMPILE_USERINFO
+//#define TEST_USERINFO
 
 using Swift;
 using System;

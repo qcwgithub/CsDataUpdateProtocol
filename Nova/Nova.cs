@@ -192,18 +192,18 @@ namespace Nova
         {
             this.d = d;
         }
-        public void Notify_UserInfo(Action<dp.dpNova_UserInfo> action)
-        {
-            WriteableBuffer w = new WriteableBuffer(d);
-            //w.Write("dpNova_UserInfo");
-            dp.dpNova_UserInfo dp = new dp.dpNova_UserInfo(w, null);
-            action(dp);
-        }
-        public void Notify(Action<dp.dpNova_ActorHeroData> action)
-        {
-            WriteableBuffer w = new WriteableBuffer(d);
-            dp.dpNova_ActorHeroData dp = new dp.dpNova_ActorHeroData(w, null);
-            action(dp);
-        }
+        //public void Notify_UserInfo(Action<dp.dpNova_UserInfo> action)
+        //{
+        //    WriteableBuffer w = new WriteableBuffer(d);
+        //    //w.Write("dpNova_UserInfo");
+        //    dp.dpNova_UserInfo dp = new dp.dpNova_UserInfo(w, null);
+        //    action(dp);
+        //}
+        //public void Notify(Action<dp.dpNova_ActorHeroData> action)
+        //{
+        //    WriteableBuffer w = new WriteableBuffer(d);
+        //    dp.dpNova_ActorHeroData dp = new dp.dpNova_ActorHeroData(w, null);
+        //    action(dp);
+        //}
     }
 }

@@ -408,12 +408,13 @@ namespace dp
 
         }
 
-        void CompileOneType(Type type, string outputDir)
+        TextFile CompileOneType(Type type)
         {
             TextFile tfFile = new TextFile(null, "// auto gen");
             tfFile.tag = "file root";
 
             // using
+            if (!Compiler_Config.OUTPUT_ONE_FILE)
             {
                 tfFile.AddS("using System;")
                     .AddS("using Nova;")
@@ -533,6 +534,67 @@ namespace dp
 
                             tfClass.AddLine();
                         }
+
+                        if (Helper.TypeIsList(mType))
+                        {
+                            string enumName = mName + "_Set";
+                            enumNames.Add(enumName);
+
+                            tfClass.AddS("public void {0}_Set({1} value_)", mName, Helper.GetTypeFullName(mType))
+                            .BraceIn()
+                            .AddS("Write(Ops, {0}.{1}, value_.Count);", Compiler_Config.ENUM_NAME, enumName)
+                            .AddS("for (int i = 0; i < value_.Count; i++)")
+                                .BraceIn()
+                                    .AddS("Write(value_[i]);")
+                                .BraceOut()
+                            .BraceOut();
+
+                            tfClass.AddS("public static void {0}_Set_Client(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
+                                .BraceIn()
+                                .AddS("int count = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
+                                .AddS("hook.Push(count);")
+                                .AddS("hook.DoAction1();")
+                                .AddS("rv.{0}.Clear();", mName)
+                                .AddS("for (int i = 0; i < count; i++)")
+                                    .BraceIn()
+                                        .AddS("rv.{0}.Add({1}());", mName, Helper.Type2ReadMethod("r", mType.GetGenericArguments()[0]))
+                                    .BraceOut()
+                                .AddS("hook.DoAction2();")
+                                .BraceOut();
+
+                            tfClass.AddLine();
+                        }
+                        if (Helper.TypeIsDict(mType))
+                        {
+                            string enumName = mName + "_Set";
+                            enumNames.Add(enumName);
+
+                            tfClass.AddS("public void {0}_Set({1} value_)", mName, Helper.GetTypeFullName(mType))
+                            .BraceIn()
+                            .AddS("Write(Ops, {0}.{1}, value_.Count);", Compiler_Config.ENUM_NAME, enumName)
+                            .AddS("foreach (var KV in value_)")
+                                .BraceIn()
+                                    .AddS("Write(KV.Key);")
+                                    .AddS("Write(KV.Value);")
+                                .BraceOut()
+                            .BraceOut();
+
+                            tfClass.AddS("public static void {0}_Set_Client(dpHook hook, IReadableBuffer r, {1} rv)", mName, Helper.GetTypeFullName(type))
+                                .BraceIn()
+                                .AddS("int count = {0}();", Helper.Type2ReadMethod("r", typeof(int)))
+                                .AddS("hook.Push(count);")
+                                .AddS("hook.DoAction1();")
+                                .AddS("rv.{0}.Clear();", mName)
+                                .AddS("for (int i = 0; i < count; i++)")
+                                    .BraceIn()
+                                        .AddS("rv.{0}.Add({1}(), {2}());", mName, Helper.Type2ReadMethod("r", mType.GetGenericArguments()[0]), 
+                                            Helper.Type2ReadMethod("r", mType.GetGenericArguments()[1]))
+                                    .BraceOut()
+                                .AddS("hook.DoAction2();")
+                                .BraceOut();
+
+                            tfClass.AddLine();
+                        }
                     }
                 }
             }
@@ -581,18 +643,51 @@ namespace dp
                 tfSync.BraceOut();
             }
 
-            Console.Write(tfFile.Format(-1));
-            Directory.CreateDirectory(outputDir);
-            File.WriteAllText(outputDir + "\\" + Compiler_Config.GetTypeGenClassName(type) + ".cs", tfFile.Format(-1));
+            //Console.Write(tfFile.Format(-1));
+            
+
+            return tfFile;
         }
 
         public void Compile(Type type, string outputDir)
         {
             hsAllTypes = new HashSet<Type>();
             TravelGetTypes(type);
+
+            Dictionary<Type, TextFile> output = new Dictionary<Type, TextFile>();
             foreach (var t in hsAllTypes)
             {
-                CompileOneType(t, outputDir);
+                output.Add(t, CompileOneType(t));
+            }
+
+            Directory.CreateDirectory(outputDir);
+            if (Compiler_Config.OUTPUT_ONE_FILE)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                TextFile tfNs = new TextFile();
+                tfNs.AddS("using System;")
+                    .AddS("using Nova;")
+                    .AddS("using dp;")
+                    .AddS("using System.Collections;")
+                    .AddS("using System.Collections.Generic;")
+                    .AddS("using Swift;")
+                    .AddLine();
+
+                sb.Append(tfNs.Format(-1));
+
+                foreach (var KV in output)
+                {
+                    sb.Append(KV.Value.Format(-1));
+                }
+                File.WriteAllText(outputDir + "\\" + Compiler_Config.OUTPUT_FILE_NAME, sb.ToString());
+            }
+            else
+            {
+                foreach (var KV in output)
+                {
+                    File.WriteAllText(outputDir + "\\" + Compiler_Config.GetTypeGenClassName(KV.Key) + ".cs", KV.Value.Format(-1));
+                }
             }
 
             {
